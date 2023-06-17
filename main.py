@@ -2,6 +2,15 @@ from fastapi import FastAPI, Body, Path, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List
+from jwt_manager import create_token
+
+app = FastAPI()
+app.title = "Mi aplicación con FastAPI"
+app.version = "1.1"
+
+class User(BaseModel):
+    email: str
+    password: str
 
 class Movie(BaseModel):
     id: Optional[int] = None
@@ -42,20 +51,22 @@ movies = [
     }
 ]
 
-app = FastAPI()
-app.title = "Mi aplicación con FastAPI"
-app.version = "1.1"
-
 
 @app.get('/', tags = ["home"])
 def message():
     return HTMLResponse('<h1>Hello world</h1>')
 # Retorna hola mundo con formato de HTML, en este caso un título
 
+@app.post('/login', tags=['Auth'])
+def login(user: User):
+    if user.email == "admin@gmail.com" and user.password == "admin":
+        token : str = create_token(user.dict())
+        return JSONResponse(status_code=200, content=token)
 
-@app.get('/movies', tags =["movies"], response_model=List[Movie])
+
+@app.get('/movies', tags =["movies"], response_model=List[Movie], status_code=200)
 def get_movies() -> List[Movie]:
-    return JSONResponse(content=movies)
+    return JSONResponse(status_code=200,content=movies)
 # Retorna el arreglo con todas las películas
 
 
@@ -65,27 +76,27 @@ def get_movie(id: int = Path(ge=1, le=2000)) -> Movie:
 # Parametro de ruta: id
     for item in movies:
         if item["id"] == id:
-            return JSONResponse(content=item)
-    return JSONResponse(content=[])
+            return JSONResponse(status_code=200, content=item)
+    return JSONResponse(status_code=404, content=[])
 # De acuerdo al id ingresado imprime los datos de la película con dicho id
 
 
 # PARÁMETRO QUERY - Filtra por categoría
-@app.get('/movies/', tags = ['movies'], response_model=List[Movie])
+@app.get('/movies/', tags = ['movies'], response_model=List[Movie], status_code=200)
 # Se coloca / después de /movies para que no se sobreescriba el que ya se había generado más arriba, sino que sea una ruta diferente
 def get_movies_by_category(category: str = Query(min_length=5, max_length=30), year: int = Query(le=2023)) -> List[Movie]:
     data = [item for item in movies if item['category'] == category and int(item['year']) == year]  # Modo inline
-    return JSONResponse(content=data)
+    return JSONResponse(status_code=200, content=data)
 # La diferencia con los parámetros de ruta está en que en este no se especifica el parámetro en la url "'/movies/{id}'" vs "'/movies/'"
 
 
-@app.post('/movies', tags= ['movies'], response_model=dict)
+@app.post('/movies', tags= ['movies'], response_model=dict, status_code=201)
 def create_movie(movie: Movie) -> dict:
     movies.append(movie)
-    return JSONResponse(content={'message': 'Se ha registrado la película'})
+    return JSONResponse(status_code=201, content={'message': 'Se ha registrado la película'})
 
 
-@app.put('/movies', tags = ['movies'], response_model=dict)
+@app.put('/movies', tags = ['movies'], response_model=dict, status_code=200)
 def update_movie(id: int, movie: Movie ) -> dict:
     for item in movies:
         if item['id'] == id:
@@ -94,12 +105,12 @@ def update_movie(id: int, movie: Movie ) -> dict:
             item['year'] = movie.year
             item['rating'] = movie.rating
             item['category'] = movie.category
-    return JSONResponse(content={'message': 'Se ha modificado la película'})
+    return JSONResponse(status_code=200, content={'message': 'Se ha modificado la película'})
 
 
-@app.delete('/movies', tags = ['movies'], response_model=dict)
+@app.delete('/movies', tags = ['movies'], response_model=dict, status_code=200)
 def delete_movie(id: int) -> dict:
     for item in movies:
         if item['id'] == id:
             movies.remove(item)
-    return JSONResponse(content={'message': 'Se ha eliminado la película'})
+    return JSONResponse(status_code=200, content={'message': 'Se ha eliminado la película'})
