@@ -1,12 +1,23 @@
-from fastapi import FastAPI, Body, Path, Query
+from fastapi import FastAPI, Body, Path, Query, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List
-from jwt_manager import create_token
+from jwt_manager import create_token, validate_token
+from fastapi.security import HTTPBearer
 
 app = FastAPI()
 app.title = "Mi aplicación con FastAPI"
 app.version = "1.1"
+
+class JWTBearer(HTTPBearer):
+    async def __call__(self, request: Request):# Se genera una función asyncrona puesto que la respuesta por parte del usuario puede tardar
+        # Request viene desde FastAPI
+        auth = await super().__call__(request)
+        # __call__ es un método de HTTPBearer y retorna las credenciales
+        # Se utiliza await ya que este proceso podría demorar por respuesta del usuario
+        data = validate_token(auth.credentials)
+        if data['email'] != "admin@gmail.com":
+            raise HTTPException(status_code=403, detail="Credenciales son inválidas")
 
 class User(BaseModel):
     email: str
@@ -64,7 +75,8 @@ def login(user: User):
         return JSONResponse(status_code=200, content=token)
 
 
-@app.get('/movies', tags =["movies"], response_model=List[Movie], status_code=200)
+@app.get('/movies', tags =["movies"], response_model=List[Movie], status_code=200, dependencies= [Depends(JWTBearer())])
+# dependencies hace que requiera autenticación para ejecutar este endpoint
 def get_movies() -> List[Movie]:
     return JSONResponse(status_code=200,content=movies)
 # Retorna el arreglo con todas las películas
