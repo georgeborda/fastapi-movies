@@ -1,9 +1,16 @@
+# python
+from typing import Optional, List
+
+# pydantic
+from pydantic import BaseModel, Field
+
+# fastapi
 from fastapi import FastAPI, Body, Path, Query, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import BaseModel, Field
-from typing import Optional, List
-from jwt_manager import create_token, validate_token
 from fastapi.security import HTTPBearer
+
+from jwt_manager import create_token, validate_token
+
 
 app = FastAPI()
 app.title = "Mi aplicación con FastAPI"
