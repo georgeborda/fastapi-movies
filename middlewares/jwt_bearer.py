@@ -1,6 +1,6 @@
 from fastapi.security import HTTPBearer
 from fastapi import Request, HTTPException
-from jwt_manager import validate_token
+from utils.jwt_manager import validate_token
 
 class JWTBearer(HTTPBearer):
     async def __call__(self, request: Request):# Se genera una función asyncrona puesto que la respuesta por parte del usuario puede tardar
