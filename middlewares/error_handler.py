@@ -1,5 +1,5 @@
 from starlette.middleware.base import BaseHTTPMiddleware
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 class ErrorHandler(BaseHTTPMiddleware):
